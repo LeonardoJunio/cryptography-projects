@@ -1,0 +1,9 @@
+{
+    "files.associations": {
+        "cesarcript.h": "c",
+        "stringutil.h": "c",
+        "string.h": "c",
+        "stdio.h": "c",
+        "cesardecrypthelper.h": "c"
+    }
+}

@@ -1,12 +1,12 @@
-<h1 align="center">Projetos - Criptografia</h1>
+<h1 align="center">Projects - Cryptography</h1>
 
-<p align="center">Alguns projetos envolvendo criptografia de textos</p>
+<p align="center">Some projects involving text encryption</p>
 
 <hr> 
 
-### :hammer_and_wrench: Tecnologias e Conceitos:
+### :hammer_and_wrench: Technologies & Concepts:
 
-* C (gcc 12.2 / make 4.3) 
+* C 12.2
 * Python 3.11
 
 <div align="center" style="display: inline_block">
@@ -18,5 +18,5 @@
 ##
 
 <div align="center">
-	<p>Feito com :computer: + :heart: por Leonardo Junio</p>
+	<p>Made with :computer: + :heart: by Leonardo Junio</p>
 </div>
