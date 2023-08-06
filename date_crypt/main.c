@@ -1,98 +1,94 @@
-/*
- ============================================================================
- Name        : Taf1RedesC.c
- Author      : Leonardo
- Version     :
- Copyright   : Your copyright notice
- Description : in C, Ansi-style
- ============================================================================
- */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-void converter(int parametro, char *mensagem, char *mensagemCod, char *dataN){
+void converter(int optionCrypt, char *text, char *processedText, char *dateNumber) {
+	int indexDateNumber = 0;
 
-	for(int i=0, j=0; i<strlen(mensagem); i++){
-		if(mensagem[i]!=32){
-			int auxI;
+	for (int i = 0; i < strlen(text); i++) {
+		int charModified;
 
-			if(parametro==1)
-				auxI = mensagem[i] + (dataN[j] - 48);
-			else if (parametro==2)
-				auxI = mensagem[i] - (dataN[j] - 48);
-
-			char auxC = auxI;
-
-			mensagemCod[i]=auxC;
-			j++;
-
-			if(i==strlen(dataN))
-				j=0;
-		}else{
-			mensagemCod[i]=32;
+		if (optionCrypt == 1) {
+			charModified = text[i] + (dateNumber[indexDateNumber] - 48);
+		} else if (optionCrypt == 2) {
+			charModified = text[i] - (dateNumber[indexDateNumber] - 48);
 		}
-		mensagemCod[strlen(mensagem)]='\0';
+
+		processedText[i] = (char)charModified;
+
+		indexDateNumber++;
+
+		if (indexDateNumber == strlen(dateNumber)) {
+			indexDateNumber = 0;
+		}
+
+		processedText[strlen(text)] = '\0';
 	}
 
-	printf("Mensagem Codificada: %s \n", mensagemCod);
+	printf("Processed text: %s \n", processedText);
 
-	if(parametro==1){
-		FILE *arq_saida;
-		arq_saida = fopen("textoCSaidaredes.sec", "w");
+	if (optionCrypt == 1) {
+		FILE *outputFile = fopen("textoCSaidaredes.sec", "w");
 
-		if (arq_saida == NULL){
-			printf("Problemas na abertura do arquivo \n");
-		}else{
-			fprintf(arq_saida, "%s", mensagemCod);
-			printf("Mensagem codificada salva. \n");
+		if (outputFile == NULL) {
+			printf("Problems opening the file \n");
+		} else {
+			fprintf(outputFile, "%s", processedText);
+			printf("Processed text saved \n");
 		}
 
-		fclose(arq_saida);
+		fclose(outputFile);
 	}
 }
 
-int main(void) {
-	FILE *arq_entrada;
-	char texto_str[100];
-	int parametro;
+int main(void)
+{
+	FILE *inputFile;
+	char text[100];
+	int optionCrypt;
 
-	printf("\n Deseja cifrar (1) ou descifrar (2): ");
-	scanf("%d", &parametro);
+	printf("Do you want to encrypt (1) or decrypt (2)? \n");
+	scanf("%d", &optionCrypt);
 
-	if(parametro==1)
-		arq_entrada = fopen("textoCredes.txt", "r");
-	else if(parametro==2)
-		arq_entrada = fopen("textoCSaidaredes.sec", "r");
-	else
-		printf("\n Selecione uma opção valida ");
+	// if(optionCrypt != 1 && optionCrypt != 2){
+	// 	printf("Select a valid option \n");
+	// 	return;
+	// }
 
-	if (arq_entrada == NULL){
-		printf("Problemas na abertura do arquivo \n");
+	if (optionCrypt == 1) {
+		inputFile = fopen("textoCredes.txt", "r");
+	} else if (optionCrypt == 2) {
+		inputFile = fopen("textoCSaidaredes.sec", "r");
+	} else {
+		printf("Select a valid option \n");
+		return EXIT_SUCCESS;
 	}
 
-	fgets(texto_str, 100, arq_entrada);  // o 'fgets' lê até 99 caracteres ou até o '\n'
+	if (inputFile == NULL) {
+		printf("Problems opening the file \n");
+		return EXIT_SUCCESS;
+	}
 
-	fclose(arq_entrada);
+	// 'fgets' reads up to 100 characters or up to '\n'
+	fgets(text, 100, inputFile);
 
-	char data[9];
-	char dataN[7];
-	char mensagemCod[strlen(texto_str)];
+	fclose(inputFile);
 
-	printf("\n Informe uma data para realizar a operação no seguinte formato, ex '01/01/18': ");
-	scanf("%s", &data);
+	char date[9];
+	char dateNumber[7];
+	char processedText[strlen(text)];
 
-	for (int i=0, j=0; i<strlen(data); i++){
-		if(data[i]!='/'){
-			dataN[j] = data[i];
+	printf("Enter a date to perform the operation in the following format (e.g. '01/01/18'): ");
+	scanf("%s", &date);
+
+	for (int i = 0, j = 0; i < strlen(date); i++) {
+		if (date[i] != '/') {
+			dateNumber[j] = date[i];
 			j++;
 		}
 	}
 
-	printf("Mensagem: %s \n", texto_str);
-
-	converter(parametro, texto_str, mensagemCod, dataN);
+	converter(optionCrypt, text, processedText, dateNumber);
 
 	return EXIT_SUCCESS;
 }
