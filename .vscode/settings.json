@@ -4,6 +4,10 @@
         "stringutil.h": "c",
         "string.h": "c",
         "stdio.h": "c",
-        "cesardecrypthelper.h": "c"
+        "cesardecrypthelper.h": "c",
+        "stdlib.h": "c",
+        "viginerecrypt.h": "c",
+        "vigenerecrypt.h": "c",
+        "vigenereutil.h": "c"
     }
 }
