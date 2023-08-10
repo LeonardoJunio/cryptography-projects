@@ -1,38 +1,38 @@
-<h1 align="center">Date Cript</h1>
+<h1 align="center">Date Crypt</h1>
 
-<p align="center">Encripta e desencripta o conteudo de um texto de acordo com uma data dita pelo usuário</p>
+<p align="center">Encrypts and decrypts the content of a sentence according to a date entered by the user</p>
 
 <hr> 
 
-### :hammer_and_wrench: Tecnologias e Conceitos:
+### :hammer_and_wrench: Technologies & Concepts:
 
-* C (gcc 12.2 / make 4.3) 
+* C 17
 
 <div align="center" style="display: inline_block">
-	<img src="https://img.shields.io/static/v1?label=C&message=v12.2&color=555555&style=flat"/>
+	<img src="https://img.shields.io/static/v1?label=C&message=v17&color=555555&style=flat"/>
 	<img src="https://img.shields.io/static/v1?label=license&message=MIT&color=green&style=flat"/>
 </div>
 
-### :gear: Configurações:
+### :gear: Settings:
 
-* Rodar o docker:
+* Launch dockerfile:
 ```bash
-docker build -f c_cpp.Dockerfile -t my-gcc-app ./ && docker run -it --rm my-gcc-app
-```
-* Executar o comando:
-```bash
-make main **OR** gcc main.c -o main 
-./main 
+docker build -f c_cpp.Dockerfile -t my-gcc-app ./ && docker run -it --rm -v ./:/app my-gcc-app
 ```
 
-### :warning: Erros/Aprimoramentos:
+* Run the following commands:
+```bash
+cd date_crypt/
+make
+./bin/app 
+```
 
-* Está ocorrendo alguns erros quando se tentar encriptar/descriptar, talvez devido as caracteres especiais ou alguma configuração no docker
-* Melhorar código/estrutura do projeto
-* Transferir para inglês(?)
+### :warning: Bugs/Improvements:
+
+* Criar arquivo de constantes e importar no inicio
 
 ##
 
 <div align="center">
-	<p>Feito com :computer: + :heart: por Leonardo Junio</p>
+	<p>Made with :computer: + :heart: by Leonardo Junio</p>
 </div>
