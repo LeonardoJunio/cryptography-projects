@@ -4,6 +4,9 @@
 
 #include "DateCrypt.h"
 
+const char* FILE_INPUT = "files/textoCredes.txt";
+const char* FILE_OUTPUT = "files/textoCSaidaredes.sec";
+
 int main(void)
 {
 	initDateCrypt();

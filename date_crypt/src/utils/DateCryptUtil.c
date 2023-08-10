@@ -5,8 +5,6 @@
 #include "DateCryptUtil.h"
 #include "../domain/structs/DateCryptStruct.h"
 
-#define FILE_INPUT "files/textoCredes.txt"
-#define FILE_OUTPUT "files/textoCSaidaredes.sec"
 #define OPTION_ENCRYPT 1
 #define OPTION_DECRYPT 2
 

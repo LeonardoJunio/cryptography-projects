@@ -29,8 +29,6 @@ make
 
 ### :warning: Bugs/Improvements:
 
-* Criar arquivo de constantes e importar no inicio
-
 ##
 
 <div align="center">

@@ -4,7 +4,7 @@
 
 #include "FileUtil.h"
 
-#define FILE_OUTPUT "files/textoCSaidaredes.sec"
+// #define FILE_OUTPUT "files/textoCSaidaredes.sec"
 #define LENGTH_TEXT 100
 
 void getTextFile(char* text, FILE* file){
