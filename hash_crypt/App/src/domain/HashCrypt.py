@@ -23,6 +23,7 @@ class HashCrypt:
     def hashFiles(self):
         pathTexts = FileUtil.dirFilesText()
 
+        print(pathTexts)
         for path, dirs, files in os.walk(pathTexts):
             for file in files:
                 HashHelper.createHashFiles(path, file)
