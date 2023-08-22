@@ -9,9 +9,10 @@ FROM python:3
 
 COPY . /app
 
-
 # Diretório de trabalho(é onde a aplicação ficará dentro do container).
 WORKDIR /app
+
+ENV PYTHONPATH "$PYTHONPATH:/app/App"
 
 USER 1000
 
