@@ -114,13 +114,11 @@ class HashCrypt:
                 print('No valid option.')
         except Exception as err:
             print("Unexpected error:", err)
-            # print(f"Unexpected {err=}")
-            
+            # print(f"Unexpected {err=}")            
         
     def hashFiles(self):
         pathTexts = FileUtil.dirFilesText()
 
-        # verifica os arquivos de acordo com o caminho, pastas e arquivo
         for path, dirs, files in os.walk(pathTexts):
             for file in files:
                 HashHelper.createHashFiles(path, file)
