@@ -1,12 +1,14 @@
 import numpy as np
 
-def converterStrDec(texto): #string para decimal
+# Returns an integer representing the Unicode character (string to decimal)
+def converterStrDec(texto) -> list:
     aux = []
     for c in texto:
         aux.append(ord(c))
     return aux
 
-def converterDecStr(texto): #decimal para string
+# Converts an integer to its Unicode character (decimal to string)
+def converterDecStr(texto) -> str: 
     aux = ''
     for c in texto:
         aux += chr(c)
@@ -16,18 +18,23 @@ def converterHexDec(texto): #hex para decimal
     aux = []
     for i in range(0, len(texto), 2):
         byte = texto[i:i+2]
-        aux.append(int('0X' + byte, 16))
+        aux.append(int('0x' + byte, 16))
     return aux
 
-def converterDecHex(texto): #decimal para hex
-    aux = ''
-    for d in texto:
-        if(len(hex(d)[2:])==1):
-            aux += '0' + hex(d)[2:] #conversao pra decimal de 2 em 2, adiciona 0 quando for só 1 valor (0x9 ->0x09)  
-        else:
-            aux += hex(d)[2:]
+# Converts an integer to the corresponding hexadecimal number (decimal to hex)
+def converterDecHex(text) -> str:
+    result = ''
+    
+    # Works with 0x0 to 0x99
+    for item in text:
+        # Takes the characters after '0x'
+        sufixHex = hex(item)[2:] 
+        
+        # Add '0' when only 1 number (0x9 ->0x09)  
+        # Ternary: a if condition else b
+        result += ('0' + sufixHex) if (len(sufixHex) == 1) else sufixHex
             
-    return aux
+    return result
 
 def Encriptar(chave, mensagem):
     tamC = len(chave)
@@ -83,6 +90,10 @@ def Desencriptar(chave, mensagem):
     mensagemSaida = converterDecStr(mensagemSaida)
     return mensagemSaida
     
+    
+    
+    
+    
 opcao = int(input('Deseja encriptar(1) ou desencriptar(2): '))
 
 if opcao==1:
@@ -120,7 +131,7 @@ elif opcao==2:
     print('Mensagem descriptografada: ', mensagemDescriptografada)
     
     arquivoSaida = open('mensagemDescriptografada.txt', 'w')
-    arquivoSaida.write(mensagemCriptografada)
+    arquivoSaida.write(mensagemDescriptografada)
     arquivoSaida.close()
 else:
     print('Opção invalida.')
