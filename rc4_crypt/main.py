@@ -1,17 +1,10 @@
 import numpy as np
 
 QTY_MAX_BYTES_KEY = 256
-PATH_NAME_FILE_KEY = 'chave.txt'
-PATH_NAME_FILE_MESSAGE = 'mensagem.txt'
-PATH_NAME_FILE_ENCRYPT = 'mensagemCriptografada.txt'
-PATH_NAME_FILE_DECRYPT = 'mensagemDescriptografada.txt'
-
-# RC4 is a symmetric stream cipher and variable key length algorithm. 
-# This symmetric key algorithm is used identically for encryption and decryption 
-# such that the data stream is simply XORed with the generated key sequence. 
-# The algorithm is serial as it requires successive exchanges of state entries 
-# based on the key sequence. The algorithm works in two phases: 
-# Key Scheduling Algorithm(KSA) and Pseudo-Random Generation Algorithm(PRGA)
+PATH_NAME_FILE_KEY = 'key.txt'
+PATH_NAME_FILE_MESSAGE = 'message.txt'
+PATH_NAME_FILE_ENCRYPT = 'messageEncrypted.txt'
+PATH_NAME_FILE_DECRYPT = 'messageDecrypted.txt'
 
 # Returns a list of the numbers representing each character in the text
 def convertStrDec(text) -> list:
@@ -159,6 +152,14 @@ def writeTextFile(pathNameFile, text):
     file.close()
 
 
+
+# RC4 is a symmetric stream cipher and variable key length algorithm. 
+# This symmetric key algorithm is used identically for encryption and decryption 
+# such that the data stream is simply XORed with the generated key sequence. 
+# The algorithm is serial as it requires successive exchanges of state entries 
+# based on the key sequence. The algorithm works in two phases: 
+# Key Scheduling Algorithm(KSA) and Pseudo-Random Generation Algorithm(PRGA)
+
 menuOption = int(input('Do you want to encrypt(1) or decrypt(2): '))
 
 match menuOption:
@@ -166,7 +167,6 @@ match menuOption:
         message = getMessage()
         key = getKey()
 
-        print('Key: ', key)
         print('Message: ', message)
 
         messageEncrypted = encryptMessage(key, message)
@@ -177,7 +177,6 @@ match menuOption:
         messageEncrypted = getEncryptedMessage()
         key = getKey()
 
-        print('Key: ', key)
         print('Encrypted Message: ', messageEncrypted)
 
         messageDecrypted = decryptMessage(key, messageEncrypted)
