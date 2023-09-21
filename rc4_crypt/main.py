@@ -1,146 +1,188 @@
 import numpy as np
 
-# Returns an integer representing the Unicode character (string to decimal)
-def converterStrDec(texto) -> list:
-    aux = []
-    for c in texto:
-        aux.append(ord(c))
-    return aux
+QTY_MAX_BYTES_KEY = 256
+PATH_NAME_FILE_KEY = 'chave.txt'
+PATH_NAME_FILE_MESSAGE = 'mensagem.txt'
+PATH_NAME_FILE_ENCRYPT = 'mensagemCriptografada.txt'
+PATH_NAME_FILE_DECRYPT = 'mensagemDescriptografada.txt'
 
-# Converts an integer to its Unicode character (decimal to string)
-def converterDecStr(texto) -> str: 
-    aux = ''
-    for c in texto:
-        aux += chr(c)
-    return aux
+# RC4 is a symmetric stream cipher and variable key length algorithm. 
+# This symmetric key algorithm is used identically for encryption and decryption 
+# such that the data stream is simply XORed with the generated key sequence. 
+# The algorithm is serial as it requires successive exchanges of state entries 
+# based on the key sequence. The algorithm works in two phases: 
+# Key Scheduling Algorithm(KSA) and Pseudo-Random Generation Algorithm(PRGA)
 
-def converterHexDec(texto): #hex para decimal
-    aux = []
-    for i in range(0, len(texto), 2):
-        byte = texto[i:i+2]
-        aux.append(int('0x' + byte, 16))
-    return aux
+# Returns a list of the numbers representing each character in the text
+def convertStrDec(text) -> list:
+    result = []
 
-# Converts an integer to the corresponding hexadecimal number (decimal to hex)
-def converterDecHex(text) -> str:
-    result = ''
-    
-    # Works with 0x0 to 0x99
-    for item in text:
-        # Takes the characters after '0x'
-        sufixHex = hex(item)[2:] 
-        
-        # Add '0' when only 1 number (0x9 ->0x09)  
-        # Ternary: a if condition else b
-        result += ('0' + sufixHex) if (len(sufixHex) == 1) else sufixHex
-            
+    for char in text:
+        # Returns an integer representing the Unicode character (string to decimal)
+        result.append(ord(char))
+
     return result
 
-def Encriptar(chave, mensagem):
-    tamC = len(chave)
-    
-    chave = converterStrDec(chave)
-    mensagem = converterStrDec(mensagem)
-    
-    S = list(range(256))
+# Returns a string, which each character represents a number on the list
+def convertDecStr(list) -> str:
+    result = ''
 
-    j=0
-    for i in range(256):
-        j = (j + S[i] + chave[i%tamC])%256
+    for char in list:
+        # Converts an integer to its Unicode character (decimal to string)
+        result += chr(char)
+
+    return result
+
+# Returns a list, which each element represents a number (decimal) of the hexadecimal
+def convertHexDec(text) -> list:
+    result = []
+
+    # Loop that iterates every 2
+    for i in range(0, len(text), 2):
+        # Suffix according to procedure in convertDecHex
+        hexSuffix = text[i:i+2]
+        decimalHex = int('0x' + hexSuffix, 16)
+        result.append(decimalHex)  # hex para decimal
+
+    return result
+
+# Returns a string, which is composed of the concatenation of part of the hexadecimal
+def convertDecHex(text) -> str:
+    result = ''
+
+    # Works with 0x0 to 0x99
+    for item in text:
+        # Converts an integer to the corresponding hexadecimal number (decimal to hex)
+        # Takes the characters after '0x'
+        hexSuffix = hex(item)[2:]
+
+        # Add '0' when only 1 number (0x9 ->0x09)
+        # Ternary: a if condition else b
+        result += ('0' + hexSuffix) if (len(hexSuffix) == 1) else hexSuffix
+
+    return result
+
+
+# Key Scheduling Algorithm(KSA): 
+# It is used to generate a State array by applying a permutation 
+# using a variable-length key consisting of 0 to 256 bytes. 
+def algorithmKsa(key):
+    # S[] is permutation of 0, 1, ..., 255
+    S = list(range(QTY_MAX_BYTES_KEY))
+    lenKey = len(key)
+    j = 0
+    
+    for i in range(QTY_MAX_BYTES_KEY):
+        numberCharMessage = key[i % lenKey]
+        j = (j + S[i] + numberCharMessage) % QTY_MAX_BYTES_KEY
         S[i], S[j] = S[j], S[i]
-    
-    i=j=0
-    keystream=[]
-    
-    for c in mensagem:
-        i=(i+1)%256
-        j=(j+S[i])%256
+
+# Pseudo-Random Generation Algorithm(PRGA): 
+# It used to generate keystream byte from State vector array 
+# after one more round of permutation
+def algorithmPrga(message):
+    # S[] is permutation of 0, 1, ..., 255
+    S = list(range(QTY_MAX_BYTES_KEY))
+    i = j = 0
+    keyStream = []
+
+    for char in message:
+        i = (i+1) % QTY_MAX_BYTES_KEY
+        j = (j+S[i]) % QTY_MAX_BYTES_KEY
         S[i], S[j] = S[j], S[i]
-        K = S[(S[i] + S[j])%256]
-        keystream.append(K)
+        # Generated key stream
+        K = S[(S[i] + S[j]) % QTY_MAX_BYTES_KEY]
+        # Performing XOR between char and generated key stream
+        keyStream.append(char ^ K)
+        
+    return keyStream
+
+# Encrypt The Message
+def encryptMessage(key, message):
+    key = convertStrDec(key)
+    message = convertStrDec(message)
     
-    keystream = np.array(keystream)
+    # Perform the KSA algorithm
+    algorithmKsa(key)         
     
-    cipher = keystream ^ mensagem #xor
-    cipher = converterDecHex(cipher)
-    return cipher
+    # Perform PRGA algorithm
+    keyStream = algorithmPrga(message)
     
-
-def Desencriptar(chave, mensagem):
-    tamC = len(chave)
-    mensagem = converterHexDec(mensagem)
+    # np.array: Converts [86, 96, 116] to [86  96 116]
+    # It's not necessary in this case, if the XOR was done with the complete string 
+    # outside the loop, it might be necessary.
+    # keyStream = np.array(keyStream)    
     
-    S = list(range(256))
-
-    j=0
-    for i in range(256):
-        j = (j + S[i] + ord(chave[i%tamC]))%256
-        S[i], S[j] = S[j], S[i]
+    messageDecrypted = convertDecHex(keyStream)
     
-    i=j=0
-    mensagemSaida = []
+    return messageDecrypted
 
-    for c in mensagem:
-        i=(i+1)%256
-        j=(j+S[i])%256
-        S[i], S[j] = S[j], S[i]
-        K = S[(S[i] + S[j])%256]
-        mensagemSaida.append(c^K)
+# Decrypt The Message
+def decryptMessage(key, message):
+    key = convertStrDec(key)
+    message = convertHexDec(message)
     
-    mensagemSaida = converterDecStr(mensagemSaida)
-    return mensagemSaida
+    # Perform the KSA algorithm
+    algorithmKsa(key)        
+        
+    # Perform PRGA algorithm
+    keyStream = algorithmPrga(message)
+
+    messageEncrypted = convertDecStr(keyStream)
     
-    
-    
-    
-    
-opcao = int(input('Deseja encriptar(1) ou desencriptar(2): '))
+    return messageEncrypted
 
-if opcao==1:
-    arquivoMensagem = open('mensagem.txt', 'r')
-    mensagem = arquivoMensagem.read()
-    arquivoMensagem.close()
-    
-    arquivoChave = open('chave.txt', 'r')
-    chave = arquivoChave.read()
-    arquivoChave.close()
+# Get key from file
+def getKey():
+    return readTextFile(PATH_NAME_FILE_KEY).strip()
 
-    print('Chave: ', chave)
-    print('Mensagem: ', mensagem)
+# Get the message from file
+def getMessage():
+    return readTextFile(PATH_NAME_FILE_MESSAGE).strip()
 
-    mensagemCriptografada = Encriptar(chave, mensagem)
-    print('Mensagem criptografada: ', mensagemCriptografada)
-    
-    arquivoSaidaCrip = open('mensagemCriptografada.txt', 'w')
-    arquivoSaidaCrip.write(mensagemCriptografada)
-    arquivoSaidaCrip.close()
-    
-elif opcao==2:
-    arquivoMensagemCrip = open('mensagemCriptografada.txt', 'r')
-    mensagemCriptografada = arquivoMensagemCrip.read()
-    arquivoMensagemCrip.close()
-    
-    arquivoChave = open('chave.txt', 'r')
-    chave = arquivoChave.read()
-    arquivoChave.close()
+# Get the encrypted message from file
+def getEncryptedMessage():
+    return readTextFile(PATH_NAME_FILE_ENCRYPT).strip()
 
-    print('Chave: ', chave)
-    print('Mensagem Criptografada: ', mensagemCriptografada)
+# Read the message from file
+def readTextFile(pathNameFile):
+    file = open(pathNameFile, 'r')
+    text = file.read()
+    file.close()
 
-    mensagemDescriptografada = Desencriptar(chave, mensagemCriptografada)
-    print('Mensagem descriptografada: ', mensagemDescriptografada)
-    
-    arquivoSaida = open('mensagemDescriptografada.txt', 'w')
-    arquivoSaida.write(mensagemDescriptografada)
-    arquivoSaida.close()
-else:
-    print('Opção invalida.')
+    return text
+
+# Write the message in the file
+def writeTextFile(pathNameFile, text):
+    file = open(pathNameFile, 'w')
+    file.write(text)
+    file.close()
 
 
+menuOption = int(input('Do you want to encrypt(1) or decrypt(2): '))
 
+match menuOption:
+    case 1:
+        message = getMessage()
+        key = getKey()
 
+        print('Key: ', key)
+        print('Message: ', message)
 
+        messageEncrypted = encryptMessage(key, message)
+        print('Encrypted Message: ', messageEncrypted)
 
+        writeTextFile(PATH_NAME_FILE_ENCRYPT, messageEncrypted)
+    case 2:
+        messageEncrypted = getEncryptedMessage()
+        key = getKey()
 
+        print('Key: ', key)
+        print('Encrypted Message: ', messageEncrypted)
 
+        messageDecrypted = decryptMessage(key, messageEncrypted)
+        print('Decrypted Message: ', messageDecrypted)
 
+        writeTextFile(PATH_NAME_FILE_DECRYPT, messageDecrypted)
+    case _:
+        print('Invalid option.')
