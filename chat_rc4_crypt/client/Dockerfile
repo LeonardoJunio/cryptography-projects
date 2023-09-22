@@ -7,12 +7,16 @@ FROM python:3
 COPY requirements.txt /tmp/
 RUN pip install --requirement /tmp/requirements.txt
 
-RUN apt-get update && apt-get install x11-xserver-utils -y  
+RUN apt-get update && apt-get install x11-xserver-utils x11-apps -y  
+
+EXPOSE 5354
 
 COPY . /app
 
+
 # Diretório de trabalho(é onde a aplicação ficará dentro do container).
 WORKDIR /app
+
 
 #USER 1000
 

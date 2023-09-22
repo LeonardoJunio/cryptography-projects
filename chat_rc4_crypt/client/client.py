@@ -3,6 +3,11 @@ from socket import AF_INET, socket, SOCK_STREAM
 from threading import Thread
 import tkinter 
 import RC4
+import os
+
+if os.environ.get('DISPLAY','') == '':
+    print('no display found. Using :0.0')
+    os.environ.__setitem__('DISPLAY', ':0.0')
 
 nome = ''
 flagNome = True
@@ -97,7 +102,7 @@ top.protocol("WM_DELETE_WINDOW", on_closing)
 #HOST = input('Enter host: ')
 #PORT = input('Enter port: ')
 
-HOST = 'localhost'
+HOST = '0.0.0.0'
 PORT = '5354'
 if not PORT:
     PORT = 33000

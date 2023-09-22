@@ -17,22 +17,13 @@
 
 * Iniciar o servidor:
 ```bash
-docker build -f python.Dockerfile -t build-amb ./ && docker run --rm -it --entrypoint bash -v ${PWD}:/app build-amb 
-python server.py
-```
-* Rodar o docker:
-```bash
-docker build -f python.Dockerfile -t build-amb ./ && docker run --rm -it --entrypoint bash -v ${PWD}:/app build-amb 
-```
-* Executar o comando:
-```bash
-python client.py
+docker compose build
+docker compose up
 ```
 
 ### :warning: Erros/Aprimoramentos:
 
-* Ao tentar iniciar o client.py, resulta em erro 
-	* Obs 1: Algumas soluções indicam "xhost +", mas é inseguro por questão de acesso, assim deveria ser "xhost +local:docker". Entretanto nem com isso funcionou
+* Por enquanto ta em fixo 2 usuarios (talvez assim mesmo, suficiente para teste)
 * Melhorar código/estrutura do projeto
 * Transferir para inglês(?)
 
