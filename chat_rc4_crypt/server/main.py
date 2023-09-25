@@ -55,6 +55,7 @@ class ServerService:
     def handleClient(clients, client):
         """Handles a single client connection. Takes client socket as argument."""
 
+        # Need to stay before sending the broadcast
         nameClient = client.recv(ServerConstants.BUFSIZE).decode("utf8")
 
         ServerService.broadcast(clients,
