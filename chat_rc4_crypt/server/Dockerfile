@@ -13,10 +13,8 @@ EXPOSE 5354
 
 COPY . /app
 
-
 # Diretório de trabalho(é onde a aplicação ficará dentro do container).
 WORKDIR /app
-
 
 #USER 1000
 
