@@ -110,11 +110,7 @@ send_button.pack()
 top.protocol("WM_DELETE_WINDOW", onClosing)
 
 HOST = '0.0.0.0'
-PORT = '5354'
-if not PORT:
-    PORT = 33000
-else:
-    PORT = int(PORT)
+PORT = 5354
 
 BUFSIZ = 1024
 ADDR = (HOST, PORT)
