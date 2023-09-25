@@ -5,6 +5,7 @@ import tkinter
 import RC4
 import os
 
+#Ajuste para funcionamento no docker, quando não encontrar DISPLAY
 if os.environ.get('DISPLAY','') == '':
     print('no display found. Using :0.0')
     os.environ.__setitem__('DISPLAY', ':0.0')
@@ -13,13 +14,16 @@ nome = ''
 flagNome = True
 tipoCrip = 1
 
+TEXT_PREFIX = "$$$"
+
 def receive():
     """Handles receiving of messages."""
     while True:
         try:
             msg = client_socket.recv(BUFSIZ).decode("utf8")
-            if(msg[0:3] == '$$$'):
-                msg = msg.replace('$',"")
+            if(msg[0:3] == TEXT_PREFIX):
+                msg = msg.replace('$',"-")
+                # print(nome, flush=True)
                 msg_list.insert(tkinter.END, msg)
             else:
                 msgDesencriptada = RC4.DesencriptarChat(msg)
@@ -27,10 +31,16 @@ def receive():
         except OSError:  # Possibly client has left the chat.
             break
 
+def clearInputField():
+    my_msg.set("")
 
 def send(event=None):  # event is passed by binders.
     """Handles sending of messages."""
-    msg = my_msg.get()
+    msg = my_msg.get().strip()
+    
+    if not msg:
+        clearInputField()
+        return
 
     global flagNome
     if (flagNome):
@@ -42,7 +52,7 @@ def send(event=None):  # event is passed by binders.
         if(msg != '{quit}' and msg[0:7] != "{chave}"):
             msg = nome + ': ' + msg
 
-    my_msg.set("")  # Clears input field.
+    clearInputField()
     
     if(msg[0:7] == "{chave}"):
         if(msg[7]=='1'):
@@ -58,7 +68,7 @@ def send(event=None):  # event is passed by binders.
             
             msgEncriptada = RC4.EncriptarChat(msg) 
             client_socket.send(bytes(msgEncriptada, "utf8"))
-        elif(msg[8]=='2'):
+        elif(msg[8]=='2'): #7 ou 8?
             print('Tipo 2')
         else:
             print('tipo invalido')
@@ -71,8 +81,9 @@ def send(event=None):  # event is passed by binders.
         msgEncriptada = RC4.EncriptarChat(msg) 
         client_socket.send(bytes(msgEncriptada, "utf8"))
             
-def on_closing(event=None):
+def onClosing(event=None):
     """This function is to be called when the window is closed."""
+    
     my_msg.set("{quit}")
     send()
 
@@ -96,11 +107,7 @@ entry_field.pack()
 send_button = tkinter.Button(top, text="Send", command=send)
 send_button.pack()
 
-top.protocol("WM_DELETE_WINDOW", on_closing)
-
-#----Now comes the sockets part----
-#HOST = input('Enter host: ')
-#PORT = input('Enter port: ')
+top.protocol("WM_DELETE_WINDOW", onClosing)
 
 HOST = '0.0.0.0'
 PORT = '5354'
@@ -116,5 +123,11 @@ client_socket = socket(AF_INET, SOCK_STREAM)
 client_socket.connect(ADDR)
 
 receive_thread = Thread(target=receive)
+# A thread that runs in the background, and is not expected to complete its execution before the program exits. 
+# On the other hand, non-daemon threads are critical to the functioning of the program, 
+# and they prevent the main program from exiting until they have completed their execution
+# The Daemon Thread does not block the main thread from exiting and continues to run in the background.
+receive_thread.daemon = True
 receive_thread.start()
-tkinter.mainloop() # Starts GUI execution.
+# Starts GUI execution
+tkinter.mainloop() 

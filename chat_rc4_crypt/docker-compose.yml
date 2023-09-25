@@ -23,8 +23,8 @@ services:
     build: server/
 
     # The command to execute once the image is created.
-    # The following command will execute "python ./server.py".
-    command: python ./server.py
+    # The following command will execute "python ./main.py".
+    command: python ./main.py
 
     # Remember that we defined in'server/server.py' 1234 as port.
     # If we want to access the server from our computer (outside the container),
@@ -39,14 +39,9 @@ services:
 
   # Second service (container): the client.
   # We use the keyword 'client' for the server.
-  client:
-    # Here 'client/ corresponds to the path to the client folder
-    # that contains the Dockerfile to use.
+  clientone:
     build: client/
-
-    # The command to execute once the image is created.
-    # The following command will execute "python ./client.py".
-    command: python ./client.py
+    command: python ./main.py
 
     # The keyword 'network_mode' is used to define the network type.
     # Here we define that the container can access to the 'localhost' of the computer.
@@ -59,20 +54,15 @@ services:
       - server
 
   clienttwo:
-    # Here 'client/ corresponds to the path to the client folder
-    # that contains the Dockerfile to use.
-    build: client2/
-
-    # The command to execute once the image is created.
-    # The following command will execute "python ./client.py".
-    command: python ./client.py
-
-    # The keyword 'network_mode' is used to define the network type.
-    # Here we define that the container can access to the 'localhost' of the computer.
+    build: client/
+    command: python ./main.py
     network_mode: host
+    depends_on:
+      - server
 
-    # The keyword'depends_on' allows you to define whether the service
-    # should wait until other services are ready before launching.
-    # Here, we want the 'client' service to wait until the 'server' service is ready.
+  clientthree:
+    build: client/
+    command: python ./main.py
+    network_mode: host
     depends_on:
       - server
