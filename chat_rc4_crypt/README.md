@@ -17,7 +17,7 @@
 
 * Run the following commands:
 ```bash
-cd cd chat_rc4_crypt/
+cd chat_rc4_crypt/
 xhost +local:docker
 docker compose up --build
 ```

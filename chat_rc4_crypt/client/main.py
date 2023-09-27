@@ -13,85 +13,113 @@ if os.environ.get('DISPLAY', '') == '':
 
 nome = ''
 flagNome = True
-tipoCrip = 1
 
+TYPE_CRYPT_RC4 = '1'
 TEXT_PREFIX = "$$$"
+TEXT_ENCODE_SEND = "utf8"
+LEN_MIN_MSG_KEY = 9
+
+FILE_KEY = "key.txt"
 
 
-def clearInputField():
-    tkMsgStrVar.set("")
+class ClientUtil:
+    @staticmethod
+    def convertStrBytes(text: str) -> bytes:
+        return bytes(text, TEXT_ENCODE_SEND)
+
+    def clearInputField(tkMsgStrVar):
+        tkMsgStrVar.set("")
 
 
-def receive():
-    """Handles receiving of messages."""
+class FileUtil:
+    def updateKey(key: str):
+        FileUtil.writeFile(FILE_KEY, key)
 
-    while True:
-        try:
-            msg = socketClient.recv(BUFSIZE).decode("utf8")
+    def writeFile(filename: str, key: str):
+        arquivoChave = open(filename, 'w')
+        arquivoChave.write(key)
+        arquivoChave.close()
 
-            if (msg[0:3] == TEXT_PREFIX):
-                msg = msg.replace('$', "-")
-                tkMsgList.insert(tkinter.END, msg)
+
+class ClientHelper:
+    def handlingIncomingMessages(msg):
+        if (msg[0:3] == TEXT_PREFIX):
+            msg = msg.replace('$', "-")
+        else:
+            msg = RC4.DesencriptarChat(msg)
+
+        return msg
+
+    def processSendedMsg(msg, socketClient, tkTop, nome):
+        if (msg == "{quit}"):
+            socketClient.send(ClientUtil.convertStrBytes(msg))
+            socketClient.close()
+
+            tkTop.quit()
+
+            return
+
+        if (msg[0:7] == "{chave}" and len(msg) > LEN_MIN_MSG_KEY):
+            if (msg[7] == TYPE_CRYPT_RC4):
+                key = msg[8:]
+
+                FileUtil.updateKey(key)
+
+                msg = 'Chave alterada por ' + nome
+
+                msgEncriptada = RC4.EncriptarChat(msg)
+                socketClient.send(ClientUtil.convertStrBytes(msgEncriptada))
             else:
-                msgDecrypted = RC4.DesencriptarChat(msg)
-                tkMsgList.insert(tkinter.END, msgDecrypted)
-        except OSError:  # Possibly client has left the chat.
-            break
+                print("Crypt not defined", flush=True)
 
+            return
 
-def send(event=None):  # event is passed by binders.
-    """Handles sending of messages."""
-    msg = tkMsgStrVar.get().strip()
+        msgEncriptada = RC4.EncriptarChat(msg)
+        socketClient.send(ClientUtil.convertStrBytes(msgEncriptada))
 
-    if not msg:
-        clearInputField()
-        return
+class ClientService:
+    def receive(socketClient, tkMsgList):
+        """Handles receiving of messages."""
 
-    global flagNome
-    if (flagNome):
-        flagNome = False
+        while True:
+            try:
+                msg = socketClient.recv(BUFSIZE).decode("utf8")
+
+                msg = ClientHelper.handlingIncomingMessages(msg)
+
+                tkMsgList.insert(tkinter.END, msg)
+            except OSError:  # Possibly client has left the chat.
+                break
+
+    def onReturnSend(tkMsgStrVar, socketClient, tkTop, event=None):
+        ClientService.send(tkMsgStrVar, socketClient, tkTop)
+
+    # event is passed by binders.
+    def send(tkMsgStrVar, socketClient, tkTop, event=None):
+        """Handles sending of messages."""
+
+        msg = tkMsgStrVar.get().strip()
+
+        if not msg:
+            ClientUtil.clearInputField(tkMsgStrVar)
+            return
 
         global nome
-        nome = msg
-    else:
-        if (msg != '{quit}' and msg[0:7] != "{chave}"):
+        if not nome:
+            nome = msg
+        elif (msg != '{quit}' and msg[0:7] != "{chave}"):
             msg = nome + ': ' + msg
 
-    clearInputField()
+        ClientUtil.clearInputField(tkMsgStrVar)
 
-    if (msg[0:7] == "{chave}"):
-        if (msg[7] == '1'):
-            chave = msg[8:]
-
-            print('Tipo: RC4')
-
-            arquivoChave = open('key.txt', 'w')
-            arquivoChave.write(chave)
-            arquivoChave.close()
-
-            msg = 'Chave alterada por ' + nome
-
-            msgEncriptada = RC4.EncriptarChat(msg)
-            socketClient.send(bytes(msgEncriptada, "utf8"))
-        elif (msg[8] == '2'):  # 7 ou 8?
-            print('Tipo 2')
-        else:
-            print('tipo invalido')
-
-    elif (msg == "{quit}"):
-        socketClient.send(bytes(msg, "utf8"))
-        socketClient.close()
-        tkTop.quit()
-    else:
-        msgEncriptada = RC4.EncriptarChat(msg)
-        socketClient.send(bytes(msgEncriptada, "utf8"))
+        ClientHelper.processSendedMsg(msg, socketClient, tkTop, nome)
 
 
-def onClosing(event=None):
-    """This function is to be called when the window is closed."""
+    def onClosing(tkMsgStrVar, socketClient, tkTop, event=None):
+        """This function is to be called when the window is closed."""
 
-    tkMsgStrVar.set("{quit}")
-    send()
+        tkMsgStrVar.set("{quit}")
+        ClientService.send(tkMsgStrVar, socketClient, tkTop)
 
 
 tkTop = tkinter.Tk()
@@ -111,16 +139,28 @@ tkMsgList = tkinter.Listbox(
 )
 tkScrollbar.pack(side=tkinter.RIGHT, fill=tkinter.Y)
 tkMsgList.pack(side=tkinter.LEFT, fill=tkinter.BOTH)
-tkMsgList.pack()
 tkMsgFrame.pack()
 
+
 tkMsgEntryField = tkinter.Entry(tkTop, textvariable=tkMsgStrVar)
-tkMsgEntryField.bind("<Return>", send)
+tkMsgEntryField.bind(
+    "<Return>", 
+    lambda event: ClientService.send(tkMsgStrVar, socketClient, tkTop, event)
+)
 tkMsgEntryField.pack()
-tkSendButton = tkinter.Button(tkTop, text="Send", command=send)
+
+# Lambda function creates a temporary simple function to be called
+tkSendButton = tkinter.Button(
+    tkTop, 
+    text="Send", 
+    command=lambda: ClientService.send(tkMsgStrVar, socketClient, tkTop)
+)
 tkSendButton.pack()
 
-tkTop.protocol("WM_DELETE_WINDOW", onClosing)
+tkTop.protocol(
+    "WM_DELETE_WINDOW", 
+    lambda: ClientService.onClosing(tkMsgStrVar, socketClient, tkTop)
+)
 
 HOST = '0.0.0.0'
 PORT = 5354
@@ -129,7 +169,7 @@ BUFSIZE = 1024
 socketClient = socket(AF_INET, SOCK_STREAM)
 socketClient.connect((HOST, PORT))
 
-threadReceive = Thread(target=receive)
+threadReceive = Thread(target=lambda: ClientService.receive(socketClient, tkMsgList))
 # A thread that runs in the background, and is not expected to complete its execution before the program exits.
 # On the other hand, non-daemon threads are critical to the functioning of the program,
 # and they prevent the main program from exiting until they have completed their execution
