@@ -22,6 +22,10 @@ LEN_MIN_MSG_KEY = 9
 FILE_KEY = "key.txt"
 
 
+#nomes de quem entra iguais? gerar nomes aleatorios, com base na data hora (semente)?
+
+
+
 class ClientUtil:
     @staticmethod
     def convertStrBytes(text: str) -> bytes:
