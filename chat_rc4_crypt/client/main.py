@@ -14,22 +14,26 @@ if os.environ.get('DISPLAY', '') == '':
 nome = ''
 flagNome = True
 
-TYPE_CRYPT_RC4 = '1'
-TEXT_PREFIX = "$$$"
-TEXT_ENCODE_SEND = "utf8"
-LEN_MIN_MSG_KEY = 9
 
-FILE_KEY = "key.txt"
+# nomes de quem entra iguais? gerar nomes aleatorios, com base na data hora (semente)?
 
+class ClientConstants:
+    TYPE_CRYPT_RC4 = '1'
+    TEXT_PREFIX = "$$$"
+    TEXT_ENCODE_SEND = "utf8"
+    LEN_MIN_MSG_KEY = 9
 
-#nomes de quem entra iguais? gerar nomes aleatorios, com base na data hora (semente)?
+    FILE_KEY = "key.txt"
 
+    HOST = '0.0.0.0'
+    PORT = 5354
+    BUFSIZE = 1024
 
 
 class ClientUtil:
     @staticmethod
     def convertStrBytes(text: str) -> bytes:
-        return bytes(text, TEXT_ENCODE_SEND)
+        return bytes(text, ClientConstants.TEXT_ENCODE_SEND)
 
     def clearInputField(tkMsgStrVar):
         tkMsgStrVar.set("")
@@ -37,7 +41,7 @@ class ClientUtil:
 
 class FileUtil:
     def updateKey(key: str):
-        FileUtil.writeFile(FILE_KEY, key)
+        FileUtil.writeFile(ClientConstants.FILE_KEY, key)
 
     def writeFile(filename: str, key: str):
         arquivoChave = open(filename, 'w')
@@ -47,7 +51,7 @@ class FileUtil:
 
 class ClientHelper:
     def handlingIncomingMessages(msg):
-        if (msg[0:3] == TEXT_PREFIX):
+        if (msg[0:3] == ClientConstants.TEXT_PREFIX):
             msg = msg.replace('$', "-")
         else:
             msg = RC4.DesencriptarChat(msg)
@@ -63,13 +67,13 @@ class ClientHelper:
 
             return
 
-        if (msg[0:7] == "{chave}" and len(msg) > LEN_MIN_MSG_KEY):
-            if (msg[7] == TYPE_CRYPT_RC4):
+        if (msg[0:7] == "{chave}" and len(msg) > ClientConstants.LEN_MIN_MSG_KEY):
+            if (msg[7] == ClientConstants.TYPE_CRYPT_RC4):
                 key = msg[8:]
 
                 FileUtil.updateKey(key)
 
-                msg = 'Chave alterada por ' + nome
+                msg = 'Key modified by ' + nome
 
                 msgEncriptada = RC4.EncriptarChat(msg)
                 socketClient.send(ClientUtil.convertStrBytes(msgEncriptada))
@@ -81,13 +85,15 @@ class ClientHelper:
         msgEncriptada = RC4.EncriptarChat(msg)
         socketClient.send(ClientUtil.convertStrBytes(msgEncriptada))
 
+
 class ClientService:
     def receive(socketClient, tkMsgList):
         """Handles receiving of messages."""
 
         while True:
             try:
-                msg = socketClient.recv(BUFSIZE).decode("utf8")
+                msg = socketClient.recv(BUFSIZE).decode(
+                    ClientConstants.TEXT_ENCODE_SEND)
 
                 msg = ClientHelper.handlingIncomingMessages(msg)
 
@@ -118,7 +124,6 @@ class ClientService:
 
         ClientHelper.processSendedMsg(msg, socketClient, tkTop, nome)
 
-
     def onClosing(tkMsgStrVar, socketClient, tkTop, event=None):
         """This function is to be called when the window is closed."""
 
@@ -148,32 +153,33 @@ tkMsgFrame.pack()
 
 tkMsgEntryField = tkinter.Entry(tkTop, textvariable=tkMsgStrVar)
 tkMsgEntryField.bind(
-    "<Return>", 
+    "<Return>",
     lambda event: ClientService.send(tkMsgStrVar, socketClient, tkTop, event)
 )
 tkMsgEntryField.pack()
 
 # Lambda function creates a temporary simple function to be called
 tkSendButton = tkinter.Button(
-    tkTop, 
-    text="Send", 
+    tkTop,
+    text="Send",
     command=lambda: ClientService.send(tkMsgStrVar, socketClient, tkTop)
 )
 tkSendButton.pack()
 
 tkTop.protocol(
-    "WM_DELETE_WINDOW", 
+    "WM_DELETE_WINDOW",
     lambda: ClientService.onClosing(tkMsgStrVar, socketClient, tkTop)
 )
 
-HOST = '0.0.0.0'
-PORT = 5354
-BUFSIZE = 1024
+HOST = ClientConstants.HOST
+PORT = ClientConstants.PORT
+BUFSIZE = ClientConstants.BUFSIZE
 
 socketClient = socket(AF_INET, SOCK_STREAM)
 socketClient.connect((HOST, PORT))
 
-threadReceive = Thread(target=lambda: ClientService.receive(socketClient, tkMsgList))
+threadReceive = Thread(
+    target=lambda: ClientService.receive(socketClient, tkMsgList))
 # A thread that runs in the background, and is not expected to complete its execution before the program exits.
 # On the other hand, non-daemon threads are critical to the functioning of the program,
 # and they prevent the main program from exiting until they have completed their execution
