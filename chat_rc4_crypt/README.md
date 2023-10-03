@@ -24,8 +24,7 @@ docker compose up --build
 
 ### :warning: Bugs/Improvements:
 
-* Melhorar código/estrutura do projeto
-* Transferir para inglês(?)
+* Perhaps the structure of the project could be improved a little more
 
 ##
 

@@ -23,8 +23,8 @@ services:
     build: server/
 
     # The command to execute once the image is created.
-    # The following command will execute "python ./main.py".
-    command: python ./main.py
+    # The following command will execute the main.py.
+    command: python ./App/src/main.py
 
     # Remember that we defined in'server/server.py' 1234 as port.
     # If we want to access the server from our computer (outside the container),
@@ -41,8 +41,8 @@ services:
   # We use the keyword 'client' for the server.
   clientone:
     build: client/
-    # Can be run with 'CMD ["python", "./main.py"]' on Dockerfile instead of here
-    command: python ./main.py 
+    # Can be run with example: 'CMD ["python", "./main.py"]' on Dockerfile instead of here
+    command: python ./App/src/main.py
 
     # The keyword 'network_mode' is used to define the network type.
     # Here we define that the container can access to the 'localhost' of the computer.
@@ -60,7 +60,7 @@ services:
 
   clienttwo:
     build: client/
-    command: python ./main.py
+    command: python ./App/src/main.py
     network_mode: host
     volumes:
       - ./client:/app
@@ -69,7 +69,7 @@ services:
 
   clientthree:
     build: client/
-    command: python ./main.py
+    command: python ./App/src/main.py
     network_mode: host
     volumes:
       - ./client:/app

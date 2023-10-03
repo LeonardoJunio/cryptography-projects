@@ -16,6 +16,8 @@ COPY . /app
 # Diretório de trabalho(é onde a aplicação ficará dentro do container).
 WORKDIR /app
 
+ENV PYTHONPATH "$PYTHONPATH:/app/App"
+
 #USER 1000
 
 # docker build -f python.Dockerfile -t build-amb ./ && docker run --rm -it --entrypoint bash -v ${PWD}:/app build-amb 
