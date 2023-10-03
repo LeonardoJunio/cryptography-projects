@@ -2,20 +2,20 @@
 
 from socket import AF_INET, socket, SOCK_STREAM
 from threading import Thread
+from datetime import datetime, timezone, timedelta
 import tkinter
 import RC4
 import os
 
 # Adjustment for docker operation, when DISPLAY variable is not found
 if os.environ.get('DISPLAY', '') == '':
-    print('no display found. Using :0.0')
+    # print('no display found. Using :0.0')
     os.environ.__setitem__('DISPLAY', ':0.0')
 
-nome = ''
-flagNome = True
 
+class User:
+    name = ''
 
-# nomes de quem entra iguais? gerar nomes aleatorios, com base na data hora (semente)?
 
 class ClientConstants:
     TYPE_CRYPT_RC4 = '1'
@@ -49,41 +49,66 @@ class FileUtil:
         arquivoChave.close()
 
 
+class DateTimeUtil:
+    def setTimeZoneBrasil():
+        return timezone(timedelta(hours=-3))
+
+    @staticmethod
+    def getDateTimeNowBrasil():
+        timeZone = DateTimeUtil.setTimeZoneBrasil()
+        return datetime.now().astimezone(timeZone)
+
+    @staticmethod
+    def getDateTimeNowFormat():
+        dtNow = DateTimeUtil.getDateTimeNowBrasil()
+        return dtNow.strftime("%d/%m/%Y %H:%M:%S")
+
+    @staticmethod
+    def getTimeNowFormat():
+        dtNow = DateTimeUtil.getDateTimeNowBrasil()
+        return dtNow.strftime("%H:%M:%S")
+
+    @staticmethod
+    def getTimeNowBrackets() -> str:
+        timeNowFormat = DateTimeUtil.getTimeNowFormat()
+        return "[" + timeNowFormat + "] "
+
+
 class ClientHelper:
     def handlingIncomingMessages(msg):
         if (msg[0:3] == ClientConstants.TEXT_PREFIX):
-            msg = msg.replace('$', "-")
-        else:
-            msg = RC4.DesencriptarChat(msg)
+            return msg.replace('$', "-")
+        
+        return RC4.DesencriptarChat(msg)
 
-        return msg
+    def processSendedMsg(msgInput, socketClient, tkTop, user):
+        timeNow = DateTimeUtil.getTimeNowBrackets()
 
-    def processSendedMsg(msg, socketClient, tkTop, nome):
-        if (msg == "{quit}"):
-            socketClient.send(ClientUtil.convertStrBytes(msg))
+        if (msgInput == "{quit}"):
+            socketClient.send(ClientUtil.convertStrBytes(msgInput))
             socketClient.close()
 
             tkTop.quit()
 
             return
 
-        if (msg[0:7] == "{chave}" and len(msg) > ClientConstants.LEN_MIN_MSG_KEY):
-            if (msg[7] == ClientConstants.TYPE_CRYPT_RC4):
-                key = msg[8:]
+        if (msgInput[0:7] == "{chave}" and len(msgInput) > ClientConstants.LEN_MIN_MSG_KEY):
+            if (msgInput[7] == ClientConstants.TYPE_CRYPT_RC4):
+                key = msgInput[8:]
 
                 FileUtil.updateKey(key)
 
-                msg = 'Key modified by ' + nome
+                msgInput = timeNow + 'Key modified by ' + user.name
 
-                msgEncriptada = RC4.EncriptarChat(msg)
-                socketClient.send(ClientUtil.convertStrBytes(msgEncriptada))
+                msgEncrypted = RC4.EncriptarChat(msgInput)
+                socketClient.send(ClientUtil.convertStrBytes(msgEncrypted))
             else:
                 print("Crypt not defined", flush=True)
 
             return
 
-        msgEncriptada = RC4.EncriptarChat(msg)
-        socketClient.send(ClientUtil.convertStrBytes(msgEncriptada))
+        msgEncrypted = RC4.EncriptarChat(timeNow + msgInput)
+        socketClient.send(ClientUtil.convertStrBytes(msgEncrypted))
 
 
 class ClientService:
@@ -92,99 +117,102 @@ class ClientService:
 
         while True:
             try:
-                msg = socketClient.recv(BUFSIZE).decode(
+                msgRecv = socketClient.recv(ClientConstants.BUFSIZE).decode(
                     ClientConstants.TEXT_ENCODE_SEND)
 
-                msg = ClientHelper.handlingIncomingMessages(msg)
+                msgRecv = ClientHelper.handlingIncomingMessages(msgRecv)
 
-                tkMsgList.insert(tkinter.END, msg)
+                tkMsgList.insert(tkinter.END, msgRecv)
             except OSError:  # Possibly client has left the chat.
                 break
 
-    def onReturnSend(tkMsgStrVar, socketClient, tkTop, event=None):
-        ClientService.send(tkMsgStrVar, socketClient, tkTop)
-
-    # event is passed by binders.
-    def send(tkMsgStrVar, socketClient, tkTop, event=None):
+    # Event is passed by binders.
+    def send(user, tkMsgStrVar, socketClient, tkTop, event=None):
         """Handles sending of messages."""
 
-        msg = tkMsgStrVar.get().strip()
+        msgInput = tkMsgStrVar.get().strip()
 
-        if not msg:
+        if not msgInput:
             ClientUtil.clearInputField(tkMsgStrVar)
             return
 
-        global nome
-        if not nome:
-            nome = msg
-        elif (msg != '{quit}' and msg[0:7] != "{chave}"):
-            msg = nome + ': ' + msg
+        if not user.name:
+            user.name = msgInput
+        elif (msgInput != '{quit}' and msgInput[0:7] != "{chave}"):
+            msgInput = user.name + ': ' + msgInput
 
         ClientUtil.clearInputField(tkMsgStrVar)
 
-        ClientHelper.processSendedMsg(msg, socketClient, tkTop, nome)
+        ClientHelper.processSendedMsg(msgInput, socketClient, tkTop, user)
 
-    def onClosing(tkMsgStrVar, socketClient, tkTop, event=None):
+    def onClosing(user, tkMsgStrVar, socketClient, tkTop, event=None):
         """This function is to be called when the window is closed."""
 
         tkMsgStrVar.set("{quit}")
-        ClientService.send(tkMsgStrVar, socketClient, tkTop)
+        ClientService.send(user, tkMsgStrVar, socketClient, tkTop)
 
 
-tkTop = tkinter.Tk()
-tkTop.title("Chat Python")
+class Client:
+    def init(self):
+        user = User()
 
-tkMsgFrame = tkinter.Frame(tkTop)
-# For the messages to be sent
-tkMsgStrVar = tkinter.StringVar()
-# To navigate through past messages
-tkScrollbar = tkinter.Scrollbar(tkMsgFrame)
-# Following will contain the messages.
-tkMsgList = tkinter.Listbox(
-    tkMsgFrame,
-    height=15,
-    width=50,
-    yscrollcommand=tkScrollbar.set
-)
-tkScrollbar.pack(side=tkinter.RIGHT, fill=tkinter.Y)
-tkMsgList.pack(side=tkinter.LEFT, fill=tkinter.BOTH)
-tkMsgFrame.pack()
+        tkTop = tkinter.Tk()
+        tkTop.title("Chat (Python)")
+
+        tkMsgFrame = tkinter.Frame(tkTop)
+        # For the messages to be sent
+        tkMsgStrVar = tkinter.StringVar()
+        # To navigate through past messages
+        tkScrollbar = tkinter.Scrollbar(tkMsgFrame)
+        # Following will contain the messages.
+        tkMsgList = tkinter.Listbox(
+            tkMsgFrame,
+            height=15,
+            width=50,
+            yscrollcommand=tkScrollbar.set
+        )
+        tkScrollbar.pack(side=tkinter.RIGHT, fill=tkinter.Y)
+        tkMsgList.pack(side=tkinter.LEFT, fill=tkinter.BOTH)
+        tkMsgFrame.pack()
+
+        tkMsgEntryField = tkinter.Entry(tkTop, textvariable=tkMsgStrVar)
+        tkMsgEntryField.bind(
+            "<Return>",
+            lambda event: ClientService.send(
+                user, tkMsgStrVar, socketClient, tkTop, event)
+        )
+        tkMsgEntryField.pack()
+
+        # Lambda function creates a temporary simple function to be called
+        tkSendButton = tkinter.Button(
+            tkTop,
+            text="Send",
+            command=lambda: ClientService.send(
+                user, tkMsgStrVar, socketClient, tkTop)
+        )
+        tkSendButton.pack()
+
+        tkTop.protocol(
+            "WM_DELETE_WINDOW",
+            lambda: ClientService.onClosing(
+                user, tkMsgStrVar, socketClient, tkTop)
+        )
+
+        socketClient = socket(AF_INET, SOCK_STREAM)
+        socketClient.connect((ClientConstants.HOST, ClientConstants.PORT))
+
+        threadReceive = Thread(
+            target=lambda: ClientService.receive(socketClient, tkMsgList))
+        # A thread that runs in the background, and is not expected to complete its execution before the program exits.
+        # On the other hand, non-daemon threads are critical to the functioning of the program,
+        # and they prevent the main program from exiting until they have completed their execution
+        # The Daemon Thread does not block the main thread from exiting and continues to run in the background.
+        threadReceive.daemon = True
+        threadReceive.start()
+        # Starts GUI execution
+        tkinter.mainloop()
 
 
-tkMsgEntryField = tkinter.Entry(tkTop, textvariable=tkMsgStrVar)
-tkMsgEntryField.bind(
-    "<Return>",
-    lambda event: ClientService.send(tkMsgStrVar, socketClient, tkTop, event)
-)
-tkMsgEntryField.pack()
+# nomes de quem entra iguais? gerar nomes aleatorios, com base na data hora (semente)?
 
-# Lambda function creates a temporary simple function to be called
-tkSendButton = tkinter.Button(
-    tkTop,
-    text="Send",
-    command=lambda: ClientService.send(tkMsgStrVar, socketClient, tkTop)
-)
-tkSendButton.pack()
-
-tkTop.protocol(
-    "WM_DELETE_WINDOW",
-    lambda: ClientService.onClosing(tkMsgStrVar, socketClient, tkTop)
-)
-
-HOST = ClientConstants.HOST
-PORT = ClientConstants.PORT
-BUFSIZE = ClientConstants.BUFSIZE
-
-socketClient = socket(AF_INET, SOCK_STREAM)
-socketClient.connect((HOST, PORT))
-
-threadReceive = Thread(
-    target=lambda: ClientService.receive(socketClient, tkMsgList))
-# A thread that runs in the background, and is not expected to complete its execution before the program exits.
-# On the other hand, non-daemon threads are critical to the functioning of the program,
-# and they prevent the main program from exiting until they have completed their execution
-# The Daemon Thread does not block the main thread from exiting and continues to run in the background.
-threadReceive.daemon = True
-threadReceive.start()
-# Starts GUI execution
-tkinter.mainloop()
+Client().init()
