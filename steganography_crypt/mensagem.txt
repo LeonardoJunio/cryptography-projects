@@ -1,1 +1,1 @@
-Testando a esteganografia, criptogragia.
+Testando a esteganografia, criptografia.

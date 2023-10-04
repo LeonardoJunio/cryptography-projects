@@ -1,6 +1,6 @@
-<h1 align="center">Steganography Cript</h1>
+<h1 align="center">Steganography Crypt</h1>
 
-<p align="center">Encripta e desencripta o conteudo em uma imagem por meio de esteganografia (estudo e uso de técnicas para ocultar a existência de uma mensagem dentro de outra)</p>
+<p align="center">Encrypts and decrypts the content in an image by steganography (study and use of techniques to hide the existence of a message inside another message or physical object)</p>
 
 <hr> 
 

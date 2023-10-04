@@ -2,99 +2,200 @@ from PIL import Image
 import numpy as np
 import cv2
 
-def mensagemBinario(mensagem):
-    binario = ''
-    for i in mensagem:
-        binario += bin(ord(i))[2::].zfill(8)
-    binario+='00000000' #sera usada como condicao de parada
-    return binario
+# It will be used as a stop condition in the steganography process
+STOP_CONDITION = "00000000"
+BINARY_QTY_BYTES = 8
 
-def binarioMensagem(binario):
-    caractere = ''
-    string = ''
-    k = 1
-    
-    for j in binario:
-        caractere += j
-        if (k == 8):
-            string += chr(int(caractere, 2))
-            k=1
-            caractere = ''
-        else:
-            k += 1
-    return string
 
-def inserirMensagem(texto, image):
-    textoBinario = mensagemBinario(texto)
-    indiceMensagem = 0
+def getBinaryFromChar(char: str) -> str:
+    int = getIntFromChar(char)
+    return getBinaryFromInt(int)
 
-    for h in image:
-        for w in h:
-            r = bin(w[0])[2::].zfill(8)
-            g = bin(w[1])[2::].zfill(8)
-            b = bin(w[2])[2::].zfill(8)
-            
-            if(indiceMensagem<len(textoBinario)):
-                w[0] = int(r[0:7] + textoBinario[indiceMensagem], 2)
-                indiceMensagem+=1
 
-            if(indiceMensagem<len(textoBinario)):
-                w[1] = int(g[0:7] + textoBinario[indiceMensagem], 2)
-                indiceMensagem+=1      
-                
-            if(indiceMensagem<len(textoBinario)):
-                w[2] = int(b[0:7] + textoBinario[indiceMensagem], 2)
-                indiceMensagem+=1 
-          
-    cv2.imwrite('imdM.bmp', image)
-    
-    print('Mensagem criptografada feita.')
+def getBinaryFromInt(int: int) -> str:
+    # bin: Return the binary representation of an integer
+    # zfill: Pad a numeric string with zeros on the left
+    return bin(int)[2::].zfill(BINARY_QTY_BYTES)
 
-def retirarMensagem(image):
-    mensagemBinaria = ''
-    count = 0
-    terminou = False #indica se a mensagem terminou de ser criptografada
-    
-    for h in image:
-        for w in h:
-            for componentRGB in w:
-                mensagemBinaria += bin(componentRGB)[2::].zfill(8)[7]
-                if(mensagemBinaria[-8::] == '00000000'):
-                    terminou=True
+
+def getIntFromChar(char: str) -> int:
+    # ord: Returns an integer representing the Unicode character
+    return ord(char)
+
+
+def getCharFromBinary(strBinary: str) -> int:
+    # strBinary with 8 bytes
+    return chr(int(strBinary, 2))
+
+
+def convertStrToBinary(text):
+    binary = ''
+
+    for char in text:
+        binary += getBinaryFromChar(char)
+
+    binary += STOP_CONDITION
+
+    return binary
+
+
+def convertBinaryToStr(binary):
+    strBinary = ''
+    text = ''
+
+    for byte in binary:
+        strBinary += byte
+
+        if (len(strBinary) == BINARY_QTY_BYTES):
+            text += getCharFromBinary(strBinary)
+
+            strBinary = ''
+
+    return text
+
+# Update te components of pixel colors RGB with the message byte
+def updatePixelColorWithByteMsg(componentRgb, byteText):
+    # Takes the original 8 bytes of each color
+    componentBinary = bin(componentRgb)[2::].zfill(8)
+    # Changes the last byte of each color with the bytes of the message
+    return int(componentBinary[0:7] + byteText, 2)
+
+
+def updateImageMessage(image, binaryMsg):
+    indexMsg = 0
+
+    for height in image:
+        for width in height:
+            # An attempt was made with a loop iterating 'width', but it was unsuccessful
+            # Element 0 is Red, element 1 is Green, element 2 is Blue
+            if (indexMsg >= len(binaryMsg)):
+                return
+
+            width[0] = updatePixelColorWithByteMsg(
+                width[0], binaryMsg[indexMsg])
+            indexMsg += 1
+
+            if (indexMsg >= len(binaryMsg)):
+                return
+
+            width[1] = updatePixelColorWithByteMsg(
+                width[1], binaryMsg[indexMsg])
+            indexMsg += 1
+
+            if (indexMsg >= len(binaryMsg)):
+                return
+
+            width[2] = updatePixelColorWithByteMsg(
+                width[2], binaryMsg[indexMsg])
+            indexMsg += 1
+
+
+def extractBinaryImage(image) -> str:
+    binaryMessage = ''
+    byteMessage = 0
+
+    for height in image:
+        for width in height:
+            for componentRgb in width:
+                binaryMessage += bin(componentRgb)[2::].zfill(8)[7]
+
+                if (binaryMessage[-8::] == STOP_CONDITION):
+                    return binaryMessage
+
+                if (byteMessage == BINARY_QTY_BYTES):
+                    byteMessage = 0
                     break
-                if(count==8):
-                    count=0
-                    break
-                count+=1
-            if(terminou):
-                break
-        if(terminou):
-            break
-                    
-                   
-    mensagemRetirada = binarioMensagem(mensagemBinaria)
-    
-    arquivoMensagemSaida = open('mensagemSaida.txt', 'w')
-    arquivoMensagemSaida.write(mensagemRetirada)
-    arquivoMensagemSaida.close()
-    
-    print("Mensagem desencriptada: ", mensagemRetirada)
+
+                byteMessage += 1
+
+    return ""
 
 
-opcao = int(input('Deseja encriptar(1) ou desencriptar(2): '))
+def insertMessageImage(text, image):
+    binaryMsg = convertStrToBinary(text)
 
-if (opcao==1) :
-    arquivoMensagem = open('mensagem.txt', 'r')
-    mensagem = arquivoMensagem.read()
-    #imagem "imd.bmp" anexada no sigaa
-    #por ser maior que 10mb (limite do sigaa para envio), não poderá ser anexada na tarefa
-    arquivoImagem = cv2.imread('imd.bmp')
-        
-    inserirMensagem(mensagem, arquivoImagem)
+    # Image is an object, so it is passed as a reference,
+    # i.e. it is changed internally in the method
+    updateImageMessage(image, binaryMsg)
+
+    saveImageCrypt(image)
+
+
+def extractSaveMessageImage(image):
+    binaryMessage = extractBinaryImage(image)
+    messageDecrypted = convertBinaryToStr(binaryMessage)
     
-    arquivoMensagem.close()
-elif (opcao==2):
-    arquivoImagemCrip = cv2.imread("imdM.bmp")
-    retirarMensagem(arquivoImagemCrip)
+    saveMessageDecryptedFile(messageDecrypted)
+    
+    return messageDecrypted.strip()
+
+
+
+
+
+
+
+def saveMessageDecryptedFile(messageDecrypted):
+    saveTextFile('mensagemSaida.txt', messageDecrypted)
+    
+def getMessageFile():
+    return readTextFile('mensagem.txt').strip()
+
+
+
+
+
+
+
+def saveTextFile(pathName, text):
+    fileOutput = open(pathName, 'w')
+    fileOutput.write(text)
+    fileOutput.close()
+    
+def readTextFile(pathName):    
+    fileText = open(pathName, 'r')
+    text = fileText.read()
+    fileText.close()
+    
+    return text
+
+
+
+def readImageCrypt():
+    return readImage('imd.bmp')
+
+def readImageEncrypt():
+    return readImage('imdM.bmp')
+
+def saveImageCrypt(image):
+    return writeImage('imdM.bmp', image)
+
+
+
+def readImage(fileNameImage):
+    return cv2.imread(fileNameImage)
+
+def writeImage(fileNameImage, image):
+    return cv2.imwrite('imdM.bmp', image)
+
+
+
+
+
+option = int(input('Do you wish to encrypt(1) or decrypt(2):'))
+
+if (option == 1):
+    message = getMessageFile()
+    image = readImageCrypt()
+
+    insertMessageImage(message, image)
+
+    print('Encrypted message created.')
+elif (option == 2):
+    imageEncrypted = readImageEncrypt()
+    
+    messageDecrypted = extractSaveMessageImage(imageEncrypted)
+
+    print("Decrypted message: ", messageDecrypted)
 else:
-    print('Opcao invalida.')
+    print('Invalid option.')
