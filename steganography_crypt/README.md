@@ -4,7 +4,7 @@
 
 <hr> 
 
-### :hammer_and_wrench: Tecnologias e Conceitos:
+### :hammer_and_wrench: Technologies & Concepts:
 
 * Python 3.11
 
@@ -13,26 +13,22 @@
 	<img src="https://img.shields.io/static/v1?label=license&message=MIT&color=green&style=flat"/>
 </div>
 
-### :gear: Configurações:
+### :gear: Settings:
 
-* Rodar o docker:
+* Launch dockerfile:
 ```bash
 docker build -f python.Dockerfile -t build-amb ./ && docker run --rm -it --entrypoint bash -v ${PWD}:/app build-amb 
 ```
-* Obs: Os arquivos que são gerados pelo execução do programa, foi adicionado '\_' para evitar conflitos
-* Executar o comando:
+
+* Run the following commands:
 ```bash
-python main.py
+python App/src/main.py
 ```
 
-### :warning: Erros/Aprimoramentos:
-
-* Melhorar código/estrutura do projeto
-* Ver forma de gerar outras imagens compativeis
-* Transferir para inglês(?)
+### :warning: Bugs/Improvements:
 
 ##
 
 <div align="center">
-	<p>Feito com :computer: + :heart: por Leonardo Junio</p>
+	<p>Made with :computer: + :heart: by Leonardo Junio</p>
 </div>
